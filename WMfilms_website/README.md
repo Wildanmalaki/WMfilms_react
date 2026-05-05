@@ -1,57 +1,173 @@
 # WMfilms Website
 
-Landing page booking untuk WMfilms menggunakan Next.js App Router, TypeScript, dan Tailwind CSS.
+Website landing page untuk **WMfilms**, layanan freelance fotografi yang berfokus pada dokumentasi **sport photography**, serta menerima kebutuhan dokumentasi **wedding** dan **event**.
 
-## Menjalankan Project
+Project ini dirancang sebagai website publik untuk membantu calon client melihat layanan, memahami paket dokumentasi, mengisi detail booking, lalu melanjutkan konfirmasi melalui WhatsApp admin.
 
-```bash
-npm install
-npm run dev
-```
+## Overview
 
-Buka `http://localhost:3000`.
+WMfilms sudah berkarya sejak 2019 dengan positioning visual yang clean, cepat, profesional, dan siap digunakan untuk kebutuhan publikasi maupun arsip personal.
 
-## Integrasi Google Sheets
+Website ini berfokus pada beberapa kebutuhan utama:
 
-Form booking bisa mengirim data ke Google Sheets lewat Google Apps Script.
+- Menampilkan identitas brand WMfilms secara modern dan premium.
+- Menyediakan informasi layanan sport, wedding, dan event.
+- Menampilkan pricelist sport berdasarkan jenis kebutuhan dokumentasi.
+- Memberikan preview arah visual portfolio.
+- Menjelaskan alur booking secara ringkas.
+- Mengumpulkan data booking client melalui form yang terstruktur.
+- Menghubungkan request booking ke Google Sheets dan WhatsApp admin.
 
-1. Buat Google Sheet baru.
-2. Buat header kolom:
+## Features
 
-```text
-Waktu Booking Masuk | Nama | WhatsApp | Layanan | Lokasi Lapangan | Link Lokasi | Tanggal | Durasi | Catatan
-```
+- Sticky responsive navbar
+- Hero section dengan visual sport/action photography
+- Services dan pricelist berdasarkan kategori
+- Tab layanan untuk Sport, Wedding, dan Event
+- Pilih paket lalu otomatis mengisi layanan di form booking
+- Portfolio preview
+- Workflow booking section
+- Booking form dengan data client dan event
+- Minimal durasi booking 2 jam
+- Input link lokasi lapangan
+- Modal konfirmasi booking
+- Template pesan WhatsApp otomatis
+- Integrasi Google Sheets via Google Apps Script
+- Responsive untuk desktop dan mobile
+- Animasi ringan saat scroll dan hover
 
-3. Buka `Extensions > Apps Script`.
-4. Paste isi file berikut ke Apps Script:
+## Tech Stack
+
+- Next.js App Router
+- React
+- TypeScript
+- Tailwind CSS
+- Lucide React
+- Google Apps Script
+
+## Booking Data
+
+Data booking yang dikumpulkan dari form:
+
+- Nama client
+- Nomor WhatsApp
+- Layanan yang dipilih
+- Lokasi lapangan
+- Link lokasi lapangan
+- Tanggal event
+- Durasi booking
+- Detail tim dan catatan tambahan
+
+Data tersebut dapat dikirim ke Google Sheets sebagai database ringan untuk mencatat request booking.
+
+## Google Sheets Integration
+
+Integrasi Google Sheets menggunakan Apps Script yang tersedia di:
 
 ```text
 google-apps-script/booking.gs
 ```
 
-5. Klik `Deploy > New deployment`.
-6. Pilih type `Web app`.
-7. Set:
+Kolom data yang digunakan:
 
 ```text
-Execute as: Me
-Who has access: Anyone
+Waktu Booking Masuk
+Nama
+WhatsApp
+Layanan
+Lokasi Lapangan
+Link Lokasi
+Tanggal
+Durasi
+Catatan
 ```
 
-8. Copy Web app URL.
-9. Isi file `.env.local`:
+Endpoint Apps Script disimpan melalui environment variable:
 
 ```env
-NEXT_PUBLIC_BOOKING_ENDPOINT="URL_WEB_APP_GOOGLE_APPS_SCRIPT"
-NEXT_PUBLIC_WHATSAPP_NUMBER="628xxxxxxxxxx"
+NEXT_PUBLIC_BOOKING_ENDPOINT=""
 ```
 
-10. Restart dev server:
+## WhatsApp Integration
 
-```bash
-npm run dev
+Setelah user mengirim form, website menampilkan modal konfirmasi. Dari modal tersebut user dapat melanjutkan ke WhatsApp admin dengan template pesan otomatis.
+
+Nomor WhatsApp admin disimpan melalui environment variable:
+
+```env
+NEXT_PUBLIC_WHATSAPP_NUMBER=""
 ```
 
-## WhatsApp
+Format pesan WhatsApp dibuat ringkas agar tetap terbaca walaupun WhatsApp preview meratakan line break:
 
-Setelah user submit form, modal konfirmasi akan menampilkan tombol `Lanjut Konfirmasi WhatsApp`. Pesannya otomatis berisi detail booking yang sudah diinput.
+```text
+REQUEST BOOKING WMFILMS
+Halo WMfilms, saya ingin melakukan booking dokumentasi.
+1. Client | Nama: ... | WhatsApp: ...
+2. Booking | Layanan: ... | Tanggal: ... | Durasi: ...
+3. Lokasi | Lapangan: ... | Maps: ...
+4. Detail Tim / Catatan | ...
+Mohon cek ketersediaan jadwal dan estimasi biaya final. Terima kasih.
+```
+
+## Folder Structure
+
+```text
+WMfilms_website
+├── google-apps-script
+│   └── booking.gs
+├── public
+├── src
+│   ├── app
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   └── page.tsx
+│   ├── assets
+│   ├── components
+│   │   ├── home
+│   │   ├── layout
+│   │   ├── sections
+│   │   ├── services
+│   │   └── ui
+│   └── lib
+│       ├── images.ts
+│       ├── pricelist.ts
+│       └── utils.ts
+├── next.config.mjs
+├── package.json
+├── tailwind.config.ts
+└── tsconfig.json
+```
+
+## Main Components
+
+- `Navbar`
+- `Hero`
+- `Services`
+- `Portfolio`
+- `Workflow`
+- `BookingForm`
+- `Footer`
+
+## Brand Direction
+
+```text
+Brand: WMfilms
+Tagline: Capture Your Moment
+Category: Sport, Wedding, Event Photographer
+Main focus: Sport photography
+Active since: 2019
+Visual direction: Dark sporty, clean, premium, professional
+Accent colors: Red, white, charcoal, gold
+```
+
+## Notes
+
+Project ini masih dapat dikembangkan lebih lanjut dengan:
+
+- Dashboard admin booking
+- Status tracking booking
+- Payment atau DP flow
+- Gallery portfolio dinamis
+- CMS untuk update pricelist dan portfolio
+- Notifikasi otomatis ke admin
