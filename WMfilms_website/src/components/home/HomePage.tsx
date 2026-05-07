@@ -4,9 +4,11 @@ import { useState } from "react";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { BookingForm } from "@/components/sections/BookingForm";
+import { FloatingWhatsApp } from "@/components/sections/FloatingWhatsApp";
 import { Hero } from "@/components/sections/Hero";
 import { Portfolio } from "@/components/sections/Portfolio";
 import { Services } from "@/components/sections/Services";
+import { WhyWMfilms } from "@/components/sections/WhyWMfilms";
 import { Workflow } from "@/components/sections/Workflow";
 
 export function HomePage() {
@@ -30,6 +32,7 @@ export function HomePage() {
         <Hero />
         <Services onSelectService={handleSelectService} />
         <Portfolio />
+        <WhyWMfilms />
         <Workflow />
         <BookingForm
           selectedServiceId={selectedServiceId}
@@ -37,6 +40,7 @@ export function HomePage() {
         />
       </main>
       <Footer />
+      <FloatingWhatsApp />
     </>
   );
 }

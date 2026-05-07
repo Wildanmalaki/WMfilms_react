@@ -1,17 +1,19 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { AnchorButton } from "@/components/ui/Button";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { cn } from "@/lib/utils";
 import wmfilmsLogo from "@/assets/logo_wmfilms_putih.png";
 
 const navItems = [
-  { label: "Layanan", href: "#services" },
-  { label: "Portfolio", href: "#portfolio" },
-  { label: "Alur Kerja", href: "#workflow" },
-  { label: "Booking Jadwal", href: "#booking" },
+  { label: "Layanan", href: "/#services" },
+  { label: "Portfolio", href: "/portfolio" },
+  { label: "Alur Kerja", href: "/#workflow" },
+  { label: "Booking Jadwal", href: "/#booking" },
 ];
 
 export function Navbar() {
@@ -20,8 +22,8 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0b0d11]/85 backdrop-blur-xl">
       <nav className="wm-container flex h-20 items-center justify-between gap-5">
-        <a
-          href="#top"
+        <Link
+          href="/#top"
           className="group flex items-center gap-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-wm-red"
           onClick={() => setIsOpen(false)}
         >
@@ -32,7 +34,7 @@ export function Navbar() {
               width={96}
               height={48}
               priority
-              className="h-9 w-auto object-contain"
+              className="brand-logo h-9 w-auto object-contain"
             />
           </span>
           <span className="leading-none">
@@ -43,34 +45,38 @@ export function Navbar() {
               Capture Your Moment
             </span>
           </span>
-        </a>
+        </Link>
 
         <div className="hidden items-center gap-1 lg:flex">
           {navItems.map((item) => (
-            <a
+            <Link
               key={item.href}
               href={item.href}
               className="group relative rounded-[8px] px-4 py-3 text-sm font-bold uppercase tracking-[0.08em] text-zinc-300 transition hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wm-red"
             >
               {item.label}
               <span className="absolute inset-x-4 bottom-2 h-0.5 origin-left scale-x-0 bg-wm-red transition-transform duration-200 group-hover:scale-x-100" />
-            </a>
+            </Link>
           ))}
         </div>
 
-        <AnchorButton href="#booking" className="hidden lg:inline-flex">
-          Booking Jadwal
-        </AnchorButton>
+        <div className="hidden items-center gap-3 lg:flex">
+          <ThemeToggle />
+          <AnchorButton href="/#booking">Booking Jadwal</AnchorButton>
+        </div>
 
-        <button
-          type="button"
-          aria-label={isOpen ? "Tutup menu" : "Buka menu"}
-          aria-expanded={isOpen}
-          className="inline-flex size-11 items-center justify-center rounded-[8px] border border-white/20 bg-white/10 text-white transition hover:border-wm-red/60 lg:hidden"
-          onClick={() => setIsOpen((value) => !value)}
-        >
-          {isOpen ? <X size={22} /> : <Menu size={22} />}
-        </button>
+        <div className="flex items-center gap-2 lg:hidden">
+          <ThemeToggle />
+          <button
+            type="button"
+            aria-label={isOpen ? "Tutup menu" : "Buka menu"}
+            aria-expanded={isOpen}
+            className="inline-flex size-11 items-center justify-center rounded-[8px] border border-white/20 bg-white/10 text-white transition hover:border-wm-red/60"
+            onClick={() => setIsOpen((value) => !value)}
+          >
+            {isOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
       </nav>
 
       <div
@@ -82,14 +88,14 @@ export function Navbar() {
         <div className="overflow-hidden">
           <div className="wm-container flex flex-col gap-2 py-4">
             {navItems.map((item) => (
-              <a
+              <Link
                 key={item.href}
                 href={item.href}
                 className="rounded-[8px] border border-white/10 px-4 py-3 text-sm font-bold uppercase tracking-[0.08em] text-zinc-200"
                 onClick={() => setIsOpen(false)}
               >
                 {item.label}
-              </a>
+              </Link>
             ))}
           </div>
         </div>

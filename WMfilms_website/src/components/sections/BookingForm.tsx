@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { CheckCircle2, MessageCircle, Send, X } from "lucide-react";
-import { bookingOptions } from "@/lib/pricelist";
+import type { ServiceCategory } from "@/lib/pricelist";
+import { serviceCategories, services } from "@/lib/pricelist";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeader } from "@/components/ui/SectionHeader";
@@ -13,6 +15,7 @@ type BookingFormProps = {
 };
 
 type BookingConfirmation = {
+  bookingType: ServiceCategory;
   name: string;
   whatsapp: string;
   service: string;
@@ -34,14 +37,76 @@ const adminWhatsAppNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(
   "",
 );
 
+const formCopy: Record<
+  ServiceCategory,
+  {
+    heading: string;
+    description: string;
+    locationLabel: string;
+    locationPlaceholder: string;
+    mapLabel: string;
+    mapPlaceholder: string;
+    durationLabel: string;
+    durationHelp: string;
+    notesLabel: string;
+    notesPlaceholder: string;
+  }
+> = {
+  Sport: {
+    heading: "Booking Sport",
+    description:
+      "Untuk dokumentasi pertandingan, sparing, turnamen, tim, atau kebutuhan konten olahraga.",
+    locationLabel: "Lokasi lapangan",
+    locationPlaceholder: "Nama lapangan / kota",
+    mapLabel: "Link lokasi lapangan",
+    mapPlaceholder: "Paste link Google Maps lokasi lapangan",
+    durationLabel: "Durasi booking",
+    durationHelp:
+      "Minimal pembookingan 2 jam. Tambahkan durasi sesuai kebutuhan, misalnya 3 atau 4 jam.",
+    notesLabel: "Detail tim dan kebutuhan tambahan",
+    notesPlaceholder:
+      "Tulis nama tim. Jika memilih paket sparing/trofeo, cantumkan juga nama tim lawan, jam mulai, dan kebutuhan khusus.",
+  },
+  Wedding: {
+    heading: "Booking Wedding",
+    description:
+      "Untuk dokumentasi akad, resepsi, prewedding, atau kebutuhan visual pernikahan lainnya.",
+    locationLabel: "Lokasi acara",
+    locationPlaceholder: "Venue akad / resepsi / lokasi prewedding",
+    mapLabel: "Link lokasi acara",
+    mapPlaceholder: "Paste link Google Maps lokasi acara",
+    durationLabel: "Durasi",
+    durationHelp:
+      "Isi estimasi durasi dokumentasi agar kebutuhan coverage bisa dihitung lebih akurat.",
+    notesLabel: "Detail konsep dan rundown",
+    notesPlaceholder:
+      "Tulis konsep acara, rundown singkat, jumlah venue, waktu mulai, dan kebutuhan output.",
+  },
+  Event: {
+    heading: "Booking Event",
+    description:
+      "Untuk dokumentasi corporate event, community event, acara panggung, gathering, atau publikasi acara.",
+    locationLabel: "Lokasi event",
+    locationPlaceholder: "Nama venue / kota",
+    mapLabel: "Link lokasi event",
+    mapPlaceholder: "Paste link Google Maps lokasi event",
+    durationLabel: "Durasi dokumentasi",
+    durationHelp:
+      "Isi estimasi durasi acara agar coverage dan estimasi final bisa disiapkan dengan tepat.",
+    notesLabel: "Detail event dan kebutuhan publikasi",
+    notesPlaceholder:
+      "Tulis jenis acara, rundown, jumlah sesi, kebutuhan foto cepat, dan catatan khusus.",
+  },
+};
+
 function createWhatsAppMessage(booking: BookingConfirmation) {
   return [
     "REQUEST BOOKING WMFILMS",
     "Halo WMfilms, saya ingin melakukan booking dokumentasi.",
     `1. Client | Nama: ${booking.name} | WhatsApp: ${booking.whatsapp}`,
-    `2. Booking | Layanan: ${booking.service} | Tanggal: ${booking.date} | Durasi: ${booking.duration}`,
-    `3. Lokasi | Lapangan: ${booking.location} | Maps: ${booking.shareLocation}`,
-    `4. Detail Tim / Catatan | ${booking.notes}`,
+    `2. Booking | Jenis: ${booking.bookingType} | Layanan: ${booking.service} | Tanggal: ${booking.date} | Durasi: ${booking.duration}`,
+    `3. Lokasi | Tempat: ${booking.location} | Maps: ${booking.shareLocation}`,
+    `4. Detail / Catatan | ${booking.notes}`,
     "Mohon cek ketersediaan jadwal dan estimasi biaya final. Terima kasih.",
   ].join("\r\n");
 }
@@ -50,22 +115,46 @@ export function BookingForm({
   selectedServiceId,
   onServiceChange,
 }: BookingFormProps) {
+  const [selectedCategory, setSelectedCategory] =
+    useState<ServiceCategory>("Sport");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [confirmation, setConfirmation] =
     useState<BookingConfirmation | null>(null);
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>("idle");
 
+  const selectedService = services.find(
+    (service) => service.id === selectedServiceId,
+  );
+  const activeCategory = selectedService?.category ?? selectedCategory;
+  const activeCopy = formCopy[activeCategory];
+  const filteredServices = services.filter(
+    (service) => service.category === activeCategory,
+  );
+
+  function resetFeedback() {
+    setIsSubmitted(false);
+    setConfirmation(null);
+    setSubmitStatus("idle");
+  }
+
+  function handleCategoryChange(category: ServiceCategory) {
+    setSelectedCategory(category);
+    onServiceChange("");
+    resetFeedback();
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const selectedOption = bookingOptions.find(
-      (option) => option.id === formData.get("service"),
+    const selectedOption = services.find(
+      (service) => service.id === formData.get("service"),
     );
 
     const booking: BookingConfirmation = {
+      bookingType: activeCategory,
       name: String(formData.get("name") ?? ""),
       whatsapp: String(formData.get("whatsapp") ?? ""),
-      service: selectedOption?.label ?? "Belum dipilih",
+      service: selectedOption?.bookingLabel ?? "Belum dipilih",
       location: String(formData.get("location") ?? ""),
       shareLocation: String(formData.get("shareLocation") ?? "") || "-",
       date: String(formData.get("date") ?? ""),
@@ -147,136 +236,171 @@ export function BookingForm({
                       Detail booking terkirim.
                     </p>
                     <p className="text-zinc-300">
-                      Untuk saat ini data belum masuk backend, tapi alur UI sudah
-                      siap untuk konfirmasi berikutnya.
+                      Silakan cek kembali detail booking sebelum lanjut
+                      konfirmasi.
                     </p>
                   </div>
                 </div>
               ) : null}
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block">
-                <span className="mb-2 block text-sm font-bold text-zinc-200">
-                  Nama client
-                </span>
-                <input
-                  required
-                  className={inputClass}
-                  name="name"
-                  placeholder="Nama lengkap"
-                />
-              </label>
-
-              <label className="block">
-                <span className="mb-2 block text-sm font-bold text-zinc-200">
-                  Nomor WhatsApp
-                </span>
-                <input
-                  required
-                  className={inputClass}
-                  name="whatsapp"
-                  inputMode="tel"
-                  placeholder="08xxxxxxxxxx"
-                />
-              </label>
-            </div>
-
-            <label className="mt-4 block">
-              <span className="mb-2 block text-sm font-bold text-zinc-200">
-                Layanan
-              </span>
-              <select
-                required
-                className={inputClass}
-                name="service"
-                value={selectedServiceId}
-                onChange={(event) => {
-                  setIsSubmitted(false);
-                  setConfirmation(null);
-                  setSubmitStatus("idle");
-                  onServiceChange(event.target.value);
-                }}
-              >
-                <option value="">Pilih layanan</option>
-                {bookingOptions.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <label className="block">
-                <span className="mb-2 block text-sm font-bold text-zinc-200">
-                  Lokasi lapangan
-                </span>
-                <input
-                  required
-                  className={inputClass}
-                  name="location"
-                  placeholder="Nama lapangan / kota"
-                />
-              </label>
-
-              <label className="block">
-                <span className="mb-2 block text-sm font-bold text-zinc-200">
-                  Tanggal event
-                </span>
-                <input required className={inputClass} name="date" type="date" />
-              </label>
-            </div>
-
-            <label className="mt-4 block">
-              <span className="mb-2 block text-sm font-bold text-zinc-200">
-                Link lokasi lapangan
-              </span>
-              <input
-                className={inputClass}
-                name="shareLocation"
-                type="url"
-                placeholder="Paste link Google Maps lokasi lapangan"
-              />
-              <p className="mt-2 text-xs leading-5 text-zinc-400">
-                Opsional, tapi disarankan agar titik lokasi lebih akurat saat
-                konfirmasi jadwal.
-              </p>
-            </label>
-
-            <label className="mt-4 block">
-              <span className="mb-2 block text-sm font-bold text-zinc-200">
-                Durasi booking
-              </span>
-              <div className="relative">
-                <input
-                  required
-                  className={`${inputClass} pr-16`}
-                  name="duration"
-                  type="number"
-                  min={2}
-                  step={1}
-                  defaultValue={2}
-                />
-                <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-sm font-bold text-zinc-400">
-                  jam
-                </span>
+              <div className="rounded-[8px] border border-white/10 bg-[#0f1116]/55 p-4">
+                <p className="text-sm font-black text-white">Jenis booking</p>
+                <p className="mt-1 text-xs leading-5 text-zinc-400">
+                  Pilih kategori agar form menyesuaikan kebutuhan dokumentasi.
+                </p>
+                <div className="mt-4 grid grid-cols-3 gap-2 rounded-[8px] border border-white/10 bg-black/20 p-1">
+                  {serviceCategories.map((category) => (
+                    <button
+                      key={category}
+                      type="button"
+                      className={cn(
+                        "min-h-10 rounded-[7px] border px-2 text-xs font-black uppercase tracking-[0.08em] transition sm:text-sm",
+                        activeCategory === category
+                          ? "border-wm-red bg-wm-red text-white shadow-red-glow"
+                          : "border-transparent bg-transparent text-zinc-300 hover:bg-white/10 hover:text-white",
+                      )}
+                      onClick={() => handleCategoryChange(category)}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <p className="mt-2 text-xs leading-5 text-zinc-400">
-                Minimal pembookingan 2 jam. Tambahkan durasi sesuai kebutuhan,
-                misalnya 3 atau 4 jam.
-              </p>
-            </label>
 
-            <label className="mt-4 block">
-              <span className="mb-2 block text-sm font-bold text-zinc-200">
-                Detail tim dan kebutuhan tambahan
-              </span>
-              <textarea
-                className={`${inputClass} min-h-32 resize-y py-3`}
-                name="notes"
-                placeholder="Tulis nama tim. Jika memilih paket sparing/trofeo, cantumkan juga nama tim lawan. "
-              />
-            </label>
+              <div className="mt-5 rounded-[8px] border border-wm-red/20 bg-wm-red/10 p-4">
+                <p className="text-sm font-black text-white">
+                  {activeCopy.heading}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-zinc-300">
+                  {activeCopy.description}
+                </p>
+              </div>
+
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <span className="mb-2 block text-sm font-bold text-zinc-200">
+                    Nama client
+                  </span>
+                  <input
+                    required
+                    className={inputClass}
+                    name="name"
+                    placeholder="Nama lengkap"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-bold text-zinc-200">
+                    Nomor WhatsApp
+                  </span>
+                  <input
+                    required
+                    className={inputClass}
+                    name="whatsapp"
+                    inputMode="tel"
+                    placeholder="08xxxxxxxxxx"
+                  />
+                </label>
+              </div>
+
+              <label className="mt-4 block">
+                <span className="mb-2 block text-sm font-bold text-zinc-200">
+                  Layanan {activeCategory}
+                </span>
+                <select
+                  required
+                  className={inputClass}
+                  name="service"
+                  value={selectedServiceId}
+                  onChange={(event) => {
+                    resetFeedback();
+                    onServiceChange(event.target.value);
+                  }}
+                >
+                  <option value="">Pilih layanan {activeCategory}</option>
+                  {filteredServices.map((service) => (
+                    <option key={service.id} value={service.id}>
+                      {service.bookingLabel}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <span className="mb-2 block text-sm font-bold text-zinc-200">
+                    {activeCopy.locationLabel}
+                  </span>
+                  <input
+                    required
+                    className={inputClass}
+                    name="location"
+                    placeholder={activeCopy.locationPlaceholder}
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-bold text-zinc-200">
+                    Tanggal event
+                  </span>
+                  <input
+                    required
+                    className={inputClass}
+                    name="date"
+                    type="date"
+                  />
+                </label>
+              </div>
+
+              <label className="mt-4 block">
+                <span className="mb-2 block text-sm font-bold text-zinc-200">
+                  {activeCopy.mapLabel}
+                </span>
+                <input
+                  className={inputClass}
+                  name="shareLocation"
+                  type="url"
+                  placeholder={activeCopy.mapPlaceholder}
+                />
+                <p className="mt-2 text-xs leading-5 text-zinc-400">
+                  Opsional, tapi disarankan agar titik lokasi lebih akurat saat
+                  konfirmasi jadwal.
+                </p>
+              </label>
+
+              <label className="mt-4 block">
+                <span className="mb-2 block text-sm font-bold text-zinc-200">
+                  {activeCopy.durationLabel}
+                </span>
+                <div className="relative">
+                  <input
+                    required
+                    className={`${inputClass} pr-16`}
+                    name="duration"
+                    type="number"
+                    min={2}
+                    step={1}
+                    defaultValue={2}
+                  />
+                  <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-sm font-bold text-zinc-400">
+                    jam
+                  </span>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-zinc-400">
+                  {activeCopy.durationHelp}
+                </p>
+              </label>
+
+              <label className="mt-4 block">
+                <span className="mb-2 block text-sm font-bold text-zinc-200">
+                  {activeCopy.notesLabel}
+                </span>
+                <textarea
+                  className={`${inputClass} min-h-32 resize-y py-3`}
+                  name="notes"
+                  placeholder={activeCopy.notesPlaceholder}
+                />
+              </label>
 
               <Button
                 type="submit"
@@ -285,7 +409,7 @@ export function BookingForm({
               >
                 {submitStatus === "saving"
                   ? "Mengirim Detail..."
-                  : "Kirim Detail Booking"}
+                  : `Kirim Booking ${activeCategory}`}
                 <Send size={17} />
               </Button>
             </form>
@@ -311,9 +435,8 @@ export function BookingForm({
                   Detail booking berhasil disiapkan.
                 </h3>
                 <p className="mt-3 text-sm leading-6 text-zinc-300">
-                  Silakan cek kembali detail berikut. Data ini bisa masuk ke
-                  Google Sheets dan dilanjutkan ke WhatsApp untuk konfirmasi
-                  jadwal.
+                  Silakan cek kembali detail berikut sebelum lanjut ke
+                  konfirmasi jadwal.
                 </p>
               </div>
               <button
@@ -328,13 +451,14 @@ export function BookingForm({
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               {[
+                ["Jenis booking", confirmation.bookingType],
                 ["Nama", confirmation.name],
                 ["Nomor WhatsApp", confirmation.whatsapp],
                 ["Layanan", confirmation.service],
-                ["Lokasi lapangan", confirmation.location],
-                ["Link lokasi lapangan", confirmation.shareLocation],
+                ["Lokasi", confirmation.location],
+                ["Link lokasi", confirmation.shareLocation],
                 ["Tanggal event", confirmation.date],
-                ["Durasi booking", confirmation.duration],
+                ["Durasi", confirmation.duration],
               ].map(([label, value]) => (
                 <div
                   key={label}
@@ -350,7 +474,7 @@ export function BookingForm({
 
             <div className="mt-3 rounded-[8px] border border-white/10 bg-[#0f1116]/65 p-4">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-zinc-500">
-                Catatan tambahan
+                Detail / Catatan
               </p>
               <p className="mt-2 text-sm leading-6 text-zinc-200">
                 {confirmation.notes}

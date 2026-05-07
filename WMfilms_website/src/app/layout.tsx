@@ -16,8 +16,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id">
-      <body>{children}</body>
+    <html lang="id" className="dark-theme">
+      <body>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+try {
+  var theme = localStorage.getItem('wmfilms-theme');
+  if (!theme) {
+    theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+  document.documentElement.classList.toggle('light-theme', theme === 'light');
+  document.documentElement.classList.toggle('dark-theme', theme !== 'light');
+} catch (_) {}
+            `,
+          }}
+        />
+        {children}
+      </body>
     </html>
   );
 }

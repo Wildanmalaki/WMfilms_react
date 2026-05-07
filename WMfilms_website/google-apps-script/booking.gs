@@ -2,6 +2,7 @@ const SHEET_NAME = "Booking";
 const TIMEZONE = "Asia/Jakarta";
 const HEADERS = [
   "Waktu Booking Masuk",
+  "Jenis Booking",
   "Nama",
   "WhatsApp",
   "Layanan",
@@ -27,6 +28,7 @@ function doPost(e) {
 
   sheet.appendRow([
     submittedAt,
+    data.bookingType,
     data.name,
     data.whatsapp,
     data.service,

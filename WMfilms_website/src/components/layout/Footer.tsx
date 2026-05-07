@@ -11,7 +11,7 @@ export function Footer() {
             alt="WMfilms logo"
             width={92}
             height={52}
-            className="h-12 w-auto object-contain"
+            className="brand-logo h-12 w-auto object-contain"
           />
           <div>
             <p className="text-base font-black text-white">
